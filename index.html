@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harry Barber - Reservas Online</title>
+  <link rel="stylesheet" href="./styles/components/css/style.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <link rel="shortcut icon" href="./styles/images/logo/logo_jarry.png" type="image/x-icon">
+  <style>
+    :root{
+      --bg: #ffffff;
+      --fg: #000000;
+      --muted: #666666;
+      --glass: rgba(0,0,0,0.04);
+      --success: #16a34a;
+      --danger: #ef4444;
+      --primary: #000000;
+      --secondary: #f5f5f5;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    
+    *{
+      box-sizing: border-box;
+    }
+    
+    body{
+      background-color: var(--bg);
+      color: var(--fg);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .landing-container {
+      max-width: 1200px;
+      width: 90%;
+      padding: 30px;
+      text-align: center;
+    }
+    
+    .logo {
+      width: 120px;
+      height: 120px;
+      object-fit: contain;
+      margin: 0 auto 20px;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin: 0 0 15px 0;
+      letter-spacing: -0.5px;
+    }
+    
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--muted);
+      margin: 0 0 30px 0;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 25px;
+      margin: 40px 0;
+    }
+    
+    .feature-card {
+      background: var(--secondary);
+      border-radius: 20px;
+      padding: 25px;
+      border: 1px solid rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+    
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+    }
+    
+    .feature-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin: 0 0 10px 0;
+    }
+    
+    .feature-desc {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    
+    .cta-button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-block;
+      margin: 20px 0;
+    }
+    
+    .cta-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+    }
+    
+    .footer {
+      margin-top: 40px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .subtitle {
+        font-size: 1rem;
+      }
+      
+      .landing-container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="landing-container">
+    <img src="./styles/images/logo/logo_jarry.png" alt="Harry Barber Logo" class="logo">
+    
+    <h1>HARRY BARBER</h1>
+    <p class="subtitle">Sistema de reservas online con sincronización en tiempo real</p>
+    
+    <div class="features">
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3 class="feature-title">Calendario Interactivo</h3>
+        <p class="feature-desc">Visualiza y reserva citas fácilmente con nuestro calendario intuitivo</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3 class="feature-title">Sincronización en Tiempo Real</h3>
+        <p class="feature-desc">Tus reservas se sincronizan automáticamente entre todos los dispositivos</p>
+      </div>
+      
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3 class="feature-title">Acceso Móvil</h3>
+        <p class="feature-desc">Usa el sistema desde tu computadora, tablet o smartphone</p>
+      </div>
+    </div>
+    
+    <a href="./pages/appointments/calendariov3.html" class="cta-button">
+      Ir al Calendario de Reservas
+    </a>
+    
+    <div class="footer">
+      <p>Sistema desarrollado para Harry Barber © 2025</p>
+    </div>
+  </div>
+</body>
+</html>

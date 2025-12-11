@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "reservas": {
+      ".read": "true",
+      ".write": "true",
+      "$reservation_id": {
+        ".validate": "newData.hasChildren(['id', 'nombre', 'telefono', 'tipoCorte', 'tipoPago', 'fecha', 'hora'])"
+      }
+    },
+    "tipos_corte": {
+      ".read": "true",
+      ".write": "true"
+    }
+  }
+}

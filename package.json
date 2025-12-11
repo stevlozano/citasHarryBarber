@@ -1,0 +1,22 @@
+{
+  "name": "citas-harry-barber",
+  "version": "1.0.0",
+  "description": "Sistema de reservas para Harry Barber con sincronización Firebase",
+  "main": "index.html",
+  "scripts": {
+    "dev": "serve .",
+    "build": "echo 'Build completed'",
+    "deploy": "echo 'Ready for Vercel deployment'"
+  },
+  "keywords": [
+    "barber",
+    "reservations",
+    "firebase",
+    "calendar"
+  ],
+  "author": "Harry Barber",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.0"
+  }
+}

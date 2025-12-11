@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Formulario Reservas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    button {
+      background: #000;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #333;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    pre {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      max-height: 300px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Test Formulario de Reservas</h1>
+    <p>Esta página demuestra que el formulario de reservas está correctamente integrado con la base de datos Firebase.</p>
+    
+    <form id="testForm">
+      <div class="form-group">
+        <label for="nombre">Nombre:</label>
+        <input type="text" id="nombre" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="telefono">Teléfono:</label>
+        <input type="tel" id="telefono" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="tipoCorte">Tipo de Corte:</label>
+        <select id="tipoCorte" required>
+          <option value="">Selecciona</option>
+          <option value="Clásico">Clásico (S/ 30)</option>
+          <option value="Degradado">Degradado (S/ 35)</option>
+          <option value="Moderno">Moderno (S/ 30)</option>
+          <option value="Barba">Barba (S/ 20)</option>
+          <option value="Niño">Niño (S/ 25)</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="tipoPago">Tipo de Pago:</label>
+        <select id="tipoPago" required>
+          <option value="Efectivo">Efectivo</option>
+          <option value="Yape">Yape</option>
+          <option value="Plin">Plin</option>
+          <option value="Tarjeta">Tarjeta</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="fecha">Fecha:</label>
+        <input type="date" id="fecha" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="hora">Hora:</label>
+        <select id="hora" required>
+          <option value="">Selecciona una hora</option>
+          <option value="08:00">08:00</option>
+          <option value="09:00">09:00</option>
+          <option value="10:00">10:00</option>
+          <option value="11:00">11:00</option>
+          <option value="12:00">12:00</option>
+          <option value="13:00">13:00</option>
+          <option value="14:00">14:00</option>
+          <option value="15:00">15:00</option>
+          <option value="16:00">16:00</option>
+          <option value="17:00">17:00</option>
+          <option value="18:00">18:00</option>
+          <option value="19:00">19:00</option>
+          <option value="20:00">20:00</option>
+          <option value="21:00">21:00</option>
+        </select>
+      </div>
+      
+      <button type="submit">Guardar Reserva</button>
+      <button type="button" id="verReservas">Ver Reservas</button>
+      <button type="button" id="limpiarReservas">Limpiar Reservas</button>
+    </form>
+    
+    <div id="status"></div>
+    <pre id="output"></pre>
+  </div>
+
+  <script type="module">
+    // Importar el módulo de base de datos
+    import { initializeFirebaseDB, readCollection, writeCollection } from './src/database/firebase-db.js';
+    
+    // Elementos del DOM
+    const form = document.getElementById('testForm');
+    const verReservasBtn = document.getElementById('verReservas');
+    const limpiarReservasBtn = document.getElementById('limpiarReservas');
+    const statusEl = document.getElementById('status');
+    const outputEl = document.getElementById('output');
+    
+    // Variables de estado
+    let isInitialized = false;
+    
+    // Función para mostrar mensajes de estado
+    function showStatus(message, type = 'info') {
+      statusEl.innerHTML = `<div class="status ${type}">${message}</div>`;
+    }
+    
+    // Función para mostrar datos en el output
+    function showOutput(data) {
+      outputEl.textContent = JSON.stringify(data, null, 2);
+    }
+    
+    // Inicializar Firebase DB
+    async function initFirebase() {
+      try {
+        showStatus('Inicializando Firebase DB...', 'info');
+        const success = await initializeFirebaseDB();
+        isInitialized = success;
+        
+        if (success) {
+          showStatus('¡Firebase DB inicializado correctamente!', 'success');
+        } else {
+          showStatus('Error al inicializar Firebase DB', 'error');
+        }
+        return success;
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+        return false;
+      }
+    }
+    
+    // Cargar reservas
+    async function loadReservas() {
+      try {
+        if (isInitialized) {
+          const data = await readCollection('reservas');
+          return data || [];
+        } else {
+          // Fallback a localStorage
+          const data = localStorage.getItem('reserva_harry_barber_v1');
+          return data ? JSON.parse(data) : [];
+        }
+      } catch (e) {
+        console.error('Error cargando reservas:', e);
+        return [];
+      }
+    }
+    
+    // Guardar reservas
+    async function saveReservas(arr) {
+      try {
+        // Guardar en localStorage
+        localStorage.setItem('reserva_harry_barber_v1', JSON.stringify(arr));
+        
+        // Guardar en Firebase si está disponible
+        if (isInitialized) {
+          await writeCollection('reservas', arr);
+        }
+      } catch (error) {
+        console.error('Error guardando reservas:', error);
+      }
+    }
+    
+    // Ver reservas
+    async function verReservas() {
+      try {
+        showStatus('Cargando reservas...', 'info');
+        const reservas = await loadReservas();
+        showStatus(`Reservas cargadas (${reservas.length} registros)`, 'success');
+        showOutput(reservas);
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    }
+    
+    // Limpiar reservas
+    async function limpiarReservas() {
+      try {
+        showStatus('Limpiando reservas...', 'info');
+        await saveReservas([]);
+        showStatus('Reservas limpiadas correctamente', 'success');
+        showOutput([]);
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    }
+    
+    // Manejar envío del formulario
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      // Validar que Firebase esté inicializado
+      if (!isInitialized) {
+        const initSuccess = await initFirebase();
+        if (!initSuccess) {
+          showStatus('No se pudo inicializar Firebase', 'error');
+          return;
+        }
+      }
+      
+      // Obtener valores del formulario
+      const nombre = document.getElementById('nombre').value.trim();
+      const telefono = document.getElementById('telefono').value.trim();
+      const tipoCorte = document.getElementById('tipoCorte').value;
+      const tipoPago = document.getElementById('tipoPago').value;
+      const fecha = document.getElementById('fecha').value;
+      const hora = document.getElementById('hora').value;
+      
+      // Validar campos requeridos
+      if (!nombre || !telefono || !tipoCorte || !tipoPago || !fecha || !hora) {
+        showStatus('Por favor completa todos los campos', 'error');
+        return;
+      }
+      
+      try {
+        showStatus('Guardando reserva...', 'info');
+        
+        // Cargar reservas existentes
+        const reservas = await loadReservas();
+        
+        // Verificar si ya existe una reserva para esa fecha y hora
+        const existe = reservas.some(r => r.fecha === fecha && r.hora === hora);
+        if (existe) {
+          showStatus('Ya existe una reserva para esa fecha y hora', 'error');
+          return;
+        }
+        
+        // Crear nueva reserva
+        const nuevaReserva = {
+          id: 'r_' + Date.now(),
+          nombre,
+          telefono,
+          tipoCorte,
+          tipoPago,
+          fecha,
+          hora,
+          createdAt: new Date().toISOString()
+        };
+        
+        // Agregar precio según el tipo de corte
+        const precios = {
+          'Clásico': 30,
+          'Degradado': 35,
+          'Moderno': 30,
+          'Barba': 20,
+          'Niño': 25
+        };
+        
+        nuevaReserva.precio = precios[tipoCorte] || 30;
+        
+        // Guardar reserva
+        reservas.push(nuevaReserva);
+        await saveReservas(reservas);
+        
+        showStatus('Reserva guardada correctamente', 'success');
+        showOutput(nuevaReserva);
+        
+        // Resetear formulario
+        form.reset();
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    });
+    
+    // Event listeners para botones
+    verReservasBtn.addEventListener('click', verReservas);
+    limpiarReservasBtn.addEventListener('click', limpiarReservas);
+    
+    // Inicializar automáticamente al cargar la página
+    window.addEventListener('DOMContentLoaded', async () => {
+      const initSuccess = await initFirebase();
+      if (initSuccess) {
+        // Establecer fecha por defecto
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        document.getElementById('fecha').value = formattedDate;
+      }
+    });
+  </script>
+</body>
+</html>

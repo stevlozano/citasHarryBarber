@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Firebase Database</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #000;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #333;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    pre {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Test de Base de Datos Firebase</h1>
+    <p>Esta página demuestra que la base de datos funcional en JavaScript puro está funcionando correctamente y sincroniza los cambios con Firebase.</p>
+    
+    <div>
+      <button id="initBtn">1. Inicializar Firebase DB</button>
+      <button id="writeBtn">2. Escribir Datos de Prueba</button>
+      <button id="readBtn">3. Leer Datos</button>
+      <button id="listenBtn">4. Escuchar Cambios en Tiempo Real</button>
+      <button id="clearBtn">5. Limpiar Datos</button>
+    </div>
+    
+    <div id="status"></div>
+    <pre id="output"></pre>
+  </div>
+
+  <script type="module">
+    // Importar el módulo de base de datos
+    import { initializeFirebaseDB, readCollection, writeCollection, listenToCollection, addDocument, updateDocument, deleteDocument } from './src/database/firebase-db.js';
+    
+    // Elementos del DOM
+    const initBtn = document.getElementById('initBtn');
+    const writeBtn = document.getElementById('writeBtn');
+    const readBtn = document.getElementById('readBtn');
+    const listenBtn = document.getElementById('listenBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const statusEl = document.getElementById('status');
+    const outputEl = document.getElementById('output');
+    
+    // Variables de estado
+    let isInitialized = false;
+    let unsubscribe = null;
+    
+    // Función para mostrar mensajes de estado
+    function showStatus(message, type = 'info') {
+      statusEl.innerHTML = `<div class="status ${type}">${message}</div>`;
+    }
+    
+    // Función para mostrar datos en el output
+    function showOutput(data) {
+      outputEl.textContent = JSON.stringify(data, null, 2);
+    }
+    
+    // Función para generar datos de prueba
+    function generateTestData() {
+      return [
+        { id: 'test_1', name: 'Reserva de Prueba 1', date: new Date().toISOString(), status: 'confirmed' },
+        { id: 'test_2', name: 'Reserva de Prueba 2', date: new Date(Date.now() + 86400000).toISOString(), status: 'pending' }
+      ];
+    }
+    
+    // Inicializar Firebase DB
+    initBtn.addEventListener('click', async () => {
+      try {
+        showStatus('Inicializando Firebase DB...', 'info');
+        const success = await initializeFirebaseDB();
+        isInitialized = success;
+        
+        if (success) {
+          showStatus('¡Firebase DB inicializado correctamente!', 'success');
+        } else {
+          showStatus('Error al inicializar Firebase DB', 'error');
+        }
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    });
+    
+    // Escribir datos de prueba
+    writeBtn.addEventListener('click', async () => {
+      if (!isInitialized) {
+        showStatus('Primero debes inicializar Firebase DB', 'error');
+        return;
+      }
+      
+      try {
+        showStatus('Escribiendo datos de prueba...', 'info');
+        const testData = generateTestData();
+        const success = await writeCollection('test_reservas', testData);
+        
+        if (success) {
+          showStatus('Datos de prueba escritos correctamente', 'success');
+          showOutput(testData);
+        } else {
+          showStatus('Error al escribir datos de prueba', 'error');
+        }
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    });
+    
+    // Leer datos
+    readBtn.addEventListener('click', async () => {
+      if (!isInitialized) {
+        showStatus('Primero debes inicializar Firebase DB', 'error');
+        return;
+      }
+      
+      try {
+        showStatus('Leyendo datos...', 'info');
+        const data = await readCollection('test_reservas');
+        showStatus(`Datos leídos correctamente (${data.length} registros)`, 'success');
+        showOutput(data);
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    });
+    
+    // Escuchar cambios en tiempo real
+    listenBtn.addEventListener('click', () => {
+      if (!isInitialized) {
+        showStatus('Primero debes inicializar Firebase DB', 'error');
+        return;
+      }
+      
+      if (unsubscribe) {
+        unsubscribe();
+        unsubscribe = null;
+        showStatus('Dejando de escuchar cambios', 'info');
+        return;
+      }
+      
+      try {
+        showStatus('Escuchando cambios en tiempo real...', 'info');
+        unsubscribe = listenToCollection('test_reservas', (data) => {
+          showStatus(`¡Datos actualizados en tiempo real! (${data.length} registros)`, 'success');
+          showOutput(data);
+        });
+        
+        if (unsubscribe) {
+          showStatus('Escuchando cambios en tiempo real. Haz clic nuevamente para dejar de escuchar.', 'success');
+        } else {
+          showStatus('No se pudo establecer la escucha en tiempo real', 'error');
+        }
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    });
+    
+    // Limpiar datos
+    clearBtn.addEventListener('click', async () => {
+      if (!isInitialized) {
+        showStatus('Primero debes inicializar Firebase DB', 'error');
+        return;
+      }
+      
+      try {
+        showStatus('Limpiando datos...', 'info');
+        const success = await writeCollection('test_reservas', []);
+        
+        if (success) {
+          showStatus('Datos limpiados correctamente', 'success');
+          showOutput([]);
+        } else {
+          showStatus('Error al limpiar datos', 'error');
+        }
+      } catch (error) {
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    });
+    
+    // Inicializar automáticamente al cargar la página
+    window.addEventListener('DOMContentLoaded', async () => {
+      showStatus('Intentando inicializar Firebase DB automáticamente...', 'info');
+      const success = await initializeFirebaseDB();
+      isInitialized = success;
+      
+      if (success) {
+        showStatus('Firebase DB inicializado automáticamente', 'success');
+      } else {
+        showStatus('No se pudo inicializar Firebase DB automáticamente. Usa el botón "Inicializar Firebase DB"', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

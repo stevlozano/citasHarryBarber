@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verificar Sincronización Firebase</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    button {
+      background: #000;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #333;
+    }
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    pre {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      max-height: 300px;
+    }
+    .log-entry {
+      margin: 5px 0;
+      padding: 5px;
+      border-bottom: 1px solid #eee;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Verificar Sincronización con Firebase</h1>
+    <p>Esta herramienta verifica la conectividad con Firebase y sincroniza los datos entre localStorage y Firebase.</p>
+    
+    <div>
+      <button id="verificarBtn">Verificar y Sincronizar</button>
+      <button id="limpiarLogsBtn">Limpiar Logs</button>
+    </div>
+    
+    <div id="status"></div>
+    <h3>Logs de Verificación:</h3>
+    <pre id="logs"></pre>
+  </div>
+
+  <script>
+    // Elementos del DOM
+    const verificarBtn = document.getElementById('verificarBtn');
+    const limpiarLogsBtn = document.getElementById('limpiarLogsBtn');
+    const statusEl = document.getElementById('status');
+    const logsEl = document.getElementById('logs');
+    
+    // Función para mostrar mensajes de estado
+    function showStatus(message, type = 'info') {
+      statusEl.innerHTML = `<div class="status ${type}">${message}</div>`;
+    }
+    
+    // Función para agregar logs
+    function addLog(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = document.createElement('div');
+      logEntry.className = `log-entry ${type}`;
+      logEntry.textContent = `[${timestamp}] ${message}`;
+      logsEl.appendChild(logEntry);
+      logsEl.scrollTop = logsEl.scrollHeight;
+    }
+    
+    // Función para limpiar logs
+    function limpiarLogs() {
+      logsEl.innerHTML = '';
+    }
+    
+    // Función para verificar y sincronizar Firebase
+    async function verificarYSincronizar() {
+      try {
+        showStatus('Iniciando verificación de Firebase...', 'info');
+        addLog('Iniciando verificación de Firebase...');
+        
+        // Importar el módulo de base de datos
+        addLog('Importando módulo de base de datos...');
+        const module = await import('./src/database/firebase-db.js');
+        addLog('✅ Módulo de base de datos importado correctamente');
+        
+        // Inicializar Firebase
+        showStatus('Inicializando Firebase...', 'info');
+        addLog('Inicializando Firebase...');
+        const initialized = await module.initializeFirebaseDB();
+        if (initialized) {
+          addLog('✅ Firebase inicializado correctamente');
+          showStatus('Firebase inicializado correctamente', 'success');
+        } else {
+          addLog('⚠️ Firebase no se pudo inicializar');
+          showStatus('No se pudo inicializar Firebase', 'warning');
+          return;
+        }
+        
+        // Verificar conexión
+        const isConnected = module.isConnected;
+        addLog(`🔌 Estado de conexión: ${isConnected ? 'Conectado' : 'Desconectado'}`);
+        
+        if (isConnected) {
+          showStatus('Sincronizando datos...', 'info');
+          addLog('🔄 Sincronizando datos...');
+          
+          // Leer datos de localStorage
+          addLog('📋 Leyendo datos de localStorage...');
+          const localStorageData = localStorage.getItem('reserva_harry_barber_v1');
+          const reservasLocales = localStorageData ? JSON.parse(localStorageData) : [];
+          addLog(`📊 Encontradas ${reservasLocales.length} reservas en localStorage`);
+          
+          // Leer datos de Firebase
+          addLog('☁️ Leyendo datos de Firebase...');
+          const reservasFirebase = await module.readCollection('reservas');
+          addLog(`📊 Encontradas ${reservasFirebase.length} reservas en Firebase`);
+          
+          // Comparar y sincronizar
+          addLog('🔍 Comparando datos...');
+          if (JSON.stringify(reservasLocales) === JSON.stringify(reservasFirebase)) {
+            addLog('✅ Los datos ya están sincronizados');
+            showStatus('Los datos ya están sincronizados', 'success');
+          } else {
+            addLog('⚠️ Los datos no están sincronizados');
+            showStatus('Sincronizando datos...', 'info');
+            
+            // Sincronizar datos (localStorage -> Firebase)
+            addLog('🔄 Sincronizando datos de localStorage a Firebase...');
+            const syncSuccess = await module.writeCollection('reservas', reservasLocales);
+            if (syncSuccess) {
+              addLog('✅ Sincronización completada exitosamente');
+              showStatus('Sincronización completada exitosamente', 'success');
+              
+              // Verificar sincronización
+              const reservasFirebaseActualizadas = await module.readCollection('reservas');
+              addLog(`📊 Ahora hay ${reservasFirebaseActualizadas.length} reservas en Firebase`);
+            } else {
+              addLog('❌ Error en la sincronización');
+              showStatus('Error en la sincronización', 'error');
+            }
+          }
+        } else {
+          addLog('❌ No se puede conectar a Firebase');
+          showStatus('No se puede conectar a Firebase', 'error');
+        }
+        
+        addLog('=== VERIFICACIÓN COMPLETADA ===');
+      } catch (error) {
+        console.error('Error:', error);
+        addLog(`❌ Error: ${error.message}`, 'error');
+        showStatus(`Error: ${error.message}`, 'error');
+      }
+    }
+    
+    // Event listeners
+    verificarBtn.addEventListener('click', verificarYSincronizar);
+    limpiarLogsBtn.addEventListener('click', limpiarLogs);
+    
+    // Inicializar logs
+    addLog('Sistema listo. Haz clic en "Verificar y Sincronizar" para comenzar.');
+  </script>
+</body>
+</html>
